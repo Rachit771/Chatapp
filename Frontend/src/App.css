@@ -1,0 +1,5 @@
+.App{
+  background-image: url('./Background.jpg'); 
+  min-height: 100vh;
+  display:flex; 
+}
