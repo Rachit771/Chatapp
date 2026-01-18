@@ -1,7 +1,10 @@
 import { FormControl, FormLabel, VStack,Input, InputGroup, InputRightElement, Button  } from '@chakra-ui/react'
 import React, { useState } from 'react'
+import {useToast} from '@chakra-ui/react'
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const Login = () => {
+const Signup = () => {
   const [show,setshow]=useState(false);
   const [name,setName]=useState();
   const [email,setEmail]=useState();
@@ -9,9 +12,122 @@ const Login = () => {
     ,setConfirmpassword]=useState();
     const [password, setPassword] = useState();
     const [pic,setPic]=useState();
-    const postDetails=(pics)=>{}
-    const handleClick=()=> setshow(!show)
-    const submitHandler=()=>{}
+    const [picLoading, setPicLoading] = useState(false);
+  const toast=useToast();
+  const navigate = useNavigate();
+const postDetails = (pics) => {
+  setPicLoading(true);
+
+  if (!pics) {
+    toast({
+      title: "Please select an image",
+      status: "warning",
+      duration: 5000,
+      isClosable: true,
+      position: "bottom",
+    });
+    setPicLoading(false);
+    return;
+  }
+
+  if (pics.type === "image/jpeg" || pics.type === "image/png") {
+    const data = new FormData();
+    data.append("file", pics);
+    data.append("upload_preset", "chat-app");
+
+    fetch("https://api.cloudinary.com/v1_1/dhftmqj6f/image/upload", {
+      method: "POST",
+      body: data,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setPic(data.secure_url);
+        setPicLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setPicLoading(false);
+      });
+  } else {
+    toast({
+      title: "Please select a JPEG or PNG image",
+      status: "warning",
+      duration: 5000,
+      isClosable: true,
+      position: "bottom",
+    });
+    setPicLoading(false);
+  }
+};
+
+
+    
+const handleClick=()=> setshow(!show)
+ const submitHandler = async () => {
+    setPicLoading(true);
+    if (!name || !email || !password || !confirmpassword) {
+      toast({
+        title: "Please Fill all the Feilds",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+      return;
+    }
+    if (password !== confirmpassword) {
+      toast({
+        title: "Passwords Do Not Match",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+    console.log(name, email, password, pic);
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      const { data } = await axios.post(
+        "http://localhost:5000/auth/signup",
+        {
+          name,
+          email,
+          password,
+          pic,
+        },
+        config
+      );
+      console.log(data);
+      toast({
+        title: "Registration Successful",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      setPicLoading(false);
+      navigate("/chats");
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: error.response.data.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+    }
+  };
+
+    
   return (
     <VStack spacing='5px'>
       <FormControl id='name' isRequired>
@@ -42,7 +158,7 @@ const Login = () => {
           </InputRightElement>
         </InputGroup>
       </FormControl>
-      <FormControl id="password" isRequired>
+      <FormControl id="confirmPassword" isRequired>
         <FormLabel>Confirm Password</FormLabel>
         <InputGroup size="md">
           <Input
@@ -70,6 +186,7 @@ const Login = () => {
       width='100%'
       style={{marginTop:15}}
       onClick={submitHandler}
+       isLoading={picLoading}
       >
         Signup
       </Button>
@@ -88,5 +205,4 @@ const Login = () => {
   )
 
 }
-
-export default Login
+export default Signup
