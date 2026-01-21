@@ -8,8 +8,8 @@ import axios from "axios";
 
 const Login = () => {
   const [show,setshow]=useState(false);
-  const [email,setEmail]=useState();
-  const [password,setPassword]=useState();
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
     const [picLoading, setPicLoading] = useState(false);
       const toast=useToast();
       const navigate = useNavigate();
@@ -45,7 +45,7 @@ const Login = () => {
       );
       console.log(data);
       toast({
-        title: "Registration Successful",
+        title: "Login Successful",
         status: "success",
         duration: 5000,
         isClosable: true,
