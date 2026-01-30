@@ -26,7 +26,7 @@ const loginHandle=asyncHandler(async (req,res)=>{
  const isPassword=await bcrypt.compare(password,userExist.password);
  if(!isPassword) throw new Error('Incorrect password');
  const token=jwt.sign(
-     {user:userExist._id,email:userExist.email},
+     {id:userExist._id},
      process.env.JWT_SECRET,
      {expiresIn:"24h"}
  )

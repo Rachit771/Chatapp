@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input, useToast } from "@chakra-ui/react";
 import axios from "axios";
+import UserListItem from "../UserAvtar/UserListItem.jsx";
+import { Spinner } from "@chakra-ui/react";
 import {
   Box,
   Button,
@@ -25,19 +27,26 @@ import {
 } from "@chakra-ui/react";
 import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import ProfileModal from "./ProfileModal.jsx";
+import ChatLoading from "../ChatLoading.jsx";
+import { MyContext } from "../../Context/Mycontext.jsx";
 
-const SideDrawer = ({ user = {} }) => {
+
+const SideDrawer = () => {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [notification, setNotification] = useState([]);
-   const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
   const navigate = useNavigate();
+  const { chats, setChats, setSelectedChat, user } = MyContext();
+
   const logoutHandler = () => {
     localStorage.removeItem("userInfo");
     navigate("/", { replace: true });
   };
+
   const handleSearch = async () => {
     if (!search) {
       toast({
@@ -59,7 +68,8 @@ const SideDrawer = ({ user = {} }) => {
         },
       };
 
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
+      const { data } = await axios.get(`http://localhost:5000/api/allUsers?search=${search}`, config);
+      console.log("Search API response:", data, Array.isArray(data));
 
       setLoading(false);
       setSearchResult(data);
@@ -74,7 +84,34 @@ const SideDrawer = ({ user = {} }) => {
       });
     }
   };
+  const accessChat = async (userId) => {
+    console.log(userId);
 
+    try {
+      setLoadingChat(true);
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const { data } = await axios.post(`http://localhost:5000/api/chat`, { userId }, config);
+
+      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
+      setSelectedChat(data);
+      setLoadingChat(false);
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error fetching the chat",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+    }
+  };
   return (
     <>
       <Box
@@ -100,29 +137,32 @@ const SideDrawer = ({ user = {} }) => {
         </Text>
 
         <Box display="flex" alignItems="center" gap={2}>
+          {/* 🔔 Notifications Menu */}
           <Menu>
-            <MenuButton>
-              <Box position="relative">
-                <IconButton
-                  icon={<BellIcon />}
-                  variant="ghost"
-                  fontSize="2xl"
-                />
-                {notification.length > 0 && (
-                  <Badge
-                    colorScheme="red"
-                    borderRadius="full"
-                    position="absolute"
-                    top="-1"
-                    right="-1"
-                    fontSize="0.7em"
-                    px={2}
-                  >
-                    {notification.length}
-                  </Badge>
-                )}
-              </Box>
-            </MenuButton>
+            <Box position="relative">
+              <MenuButton
+                as={IconButton}
+                aria-label="Notifications"
+                icon={<BellIcon />}
+                variant="ghost"
+                fontSize="2xl"
+              />
+
+              {notification.length > 0 && (
+                <Badge
+                  colorScheme="red"
+                  borderRadius="full"
+                  position="absolute"
+                  top="-1"
+                  right="-1"
+                  fontSize="0.7em"
+                  px={2}
+                >
+                  {notification.length}
+                </Badge>
+              )}
+            </Box>
+
             <MenuList>
               {notification.length === 0 ? (
                 <Text px={4}>No New Messages</Text>
@@ -136,20 +176,22 @@ const SideDrawer = ({ user = {} }) => {
             </MenuList>
           </Menu>
 
+          {/* 👤 Profile Menu */}
           <Menu>
             <MenuButton
               as={Button}
-              bg="white"
+              variant="ghost"
               rightIcon={<ChevronDownIcon />}
               _hover={{ bg: "gray.100" }}
+              p={1}
             >
               <Avatar
                 size="sm"
                 name={user?.name || "User"}
                 src={user?.pic || ""}
-                cursor="pointer"
               />
             </MenuButton>
+
             <MenuList>
               <MenuItem
                 onClick={() => {
@@ -182,6 +224,18 @@ const SideDrawer = ({ user = {} }) => {
               />
               <Button onClick={handleSearch}>Go</Button>
             </Box>
+            {loading ? (
+              <ChatLoading />
+            ) : (
+              searchResult?.map((user) => (
+                <UserListItem
+                  key={user._id}
+                  user={user}
+                  handleFunction={() => accessChat(user._id)}
+                />
+              ))
+            )}
+            {loadingChat && <Spinner ml="auto" d="flex" />}
           </DrawerBody>
         </DrawerContent>
       </Drawer>
