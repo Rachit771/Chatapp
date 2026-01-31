@@ -96,8 +96,7 @@ const SideDrawer = () => {
         },
       };
       const { data } = await axios.post(`http://localhost:5000/api/chat`, { userId }, config);
-
-      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
+    if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]); //It decides which chat to add by clicking on Go
       setSelectedChat(data);
       setLoadingChat(false);
       onClose();
@@ -137,7 +136,7 @@ const SideDrawer = () => {
         </Text>
 
         <Box display="flex" alignItems="center" gap={2}>
-          {/* 🔔 Notifications Menu */}
+          {/*  Notifications Menu */}
           <Menu>
             <Box position="relative">
               <MenuButton
@@ -176,7 +175,7 @@ const SideDrawer = () => {
             </MenuList>
           </Menu>
 
-          {/* 👤 Profile Menu */}
+          {/* Profile Menu */}
           <Menu>
             <MenuButton
               as={Button}

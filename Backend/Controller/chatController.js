@@ -5,51 +5,38 @@ const User = require("../Model/userModel");
 //@description     Create or fetch One to One Chat
 //@route           POST /api/chat/
 //@access          Protected
+
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
-    console.log("UserId param not sent with request");
-    return res.sendStatus(400);
+    return res.status(400).json({ message: "UserId required" });
   }
 
-  var isChat = await Chat.find({
-    isGroupChat: false,
-    $and: [
-      { users: { $elemMatch: { $eq: req.user._id } } },
-      { users: { $elemMatch: { $eq: userId } } },
-    ],
-  })
-    .populate("users", "-password")
-    .populate("latestMessage");
+  //  Find existing one-to-one chat
+  let chat = await Chat.findOne({
+    isGroup: false,
+    users: { $all: [req.user._id, userId] },
+  }).populate("users", "-password");
 
-  isChat = await User.populate(isChat, {
-    path: "latestMessage.sender",
-    select: "name pic email",
+  if (chat) {
+    return res.json(chat);
+  }
+
+  // Create new chat if not found
+  chat = await Chat.create({
+    chatName: "sender",
+    isGroup: false,
+    users: [req.user._id, userId],
   });
 
-  if (isChat.length > 0) {
-    res.send(isChat[0]);
-  } else {
-    var chatData = {
-      chatName: "sender",
-      isGroupChat: false,
-      users: [req.user._id, userId],
-    };
+  chat = await chat.populate("users", "-password");
 
-    try {
-      const createdChat = await Chat.create(chatData);
-      const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
-        "users",
-        "-password"
-      );
-      res.status(200).json(FullChat);
-    } catch (error) {
-      res.status(400);
-      throw new Error(error.message);
-    }
-  }
+  return res.status(201).json(chat);
 });
+
+
+
 
 //@description     Fetch all chats for a user
 //@route           GET /api/chat/
