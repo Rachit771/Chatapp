@@ -27,7 +27,7 @@ import {
 } from "@chakra-ui/react";
 import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import ProfileModal from "./ProfileModal.jsx";
-import ChatLoading from "../ChatLoading.jsx";
+import ChatLoading from "../UserAvtar/ChatLoading.jsx";
 import { MyContext } from "../../Context/Mycontext.jsx";
 
 

@@ -1,6 +1,3 @@
-import { ViewIcon } from "@chakra-ui/icons";
-import { Avatar } from "@chakra-ui/react";
-
 import {
   Modal,
   ModalOverlay,
@@ -10,22 +7,22 @@ import {
   ModalBody,
   ModalCloseButton,
   Button,
+  Avatar,
+  Text,
   useDisclosure,
   IconButton,
-  Text,
-  Image,
 } from "@chakra-ui/react";
+import { ViewIcon } from "@chakra-ui/icons";
 
-const ProfileModal = ({ user }) => {
+const ProfileModal = ({ user, children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <>
-      <button
-        id="open-profile-modal"
-        style={{ display: "none" }}
-        onClick={onOpen}
-      />
+      {/* Trigger */}
+      <span onClick={onOpen} style={{ cursor: "pointer" }}>
+        {children ? children : <IconButton icon={<ViewIcon />} />}
+      </span>
 
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />
@@ -47,13 +44,12 @@ const ProfileModal = ({ user }) => {
             alignItems="center"
             justifyContent="space-between"
           >
-          <Avatar
-          size="2xl"
-          name={user?.name || "User"}
-          src={user?.pic}
-           mb={4}
-          />
-
+            <Avatar
+              size="2xl"
+              name={user?.name}
+              src={user?.pic}
+              mb={4}
+            />
 
             <Text fontSize="30px" fontFamily="Work sans">
               Email: {user.email}
@@ -69,5 +65,5 @@ const ProfileModal = ({ user }) => {
   );
 };
 
-
 export default ProfileModal;
+
