@@ -4,20 +4,20 @@ import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import {
   Avatar,
-  Badge,
   Flex,
   HStack,
   Spacer,
   useColorModeValue,
 } from "@chakra-ui/react";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import axios from "../../config/axios";
+import { useEffect } from "react";
 import { MyContext } from "../../Context/Mycontext";
 import { Button } from "@chakra-ui/react";
 import { getSender } from "../../config/ChatLogics";
 import ChatLoading from "./ChatLoading";
 import GroupChatModal from "../miscellaneous/GroupChatModal";
-const MyChats = ({fetchAgain}) => {
+
+const MyChats = ({ fetchAgain }) => {
   const { selectedChat, setSelectedChat, user, chats, setChats } = MyContext();
 
   const toast = useToast();
@@ -32,7 +32,8 @@ const MyChats = ({fetchAgain}) => {
   const unselectedText = useColorModeValue("gray.800", "gray.100");
 
   const fetchChats = async () => {
-    // console.log(user._id);
+    if (!user?.token) return;
+
     try {
       const config = {
         headers: {
@@ -40,11 +41,7 @@ const MyChats = ({fetchAgain}) => {
         },
       };
 
-      const { data } = await axios.get(
-        "http://localhost:5000/api/chat",
-        config,
-      );
-
+      const { data } = await axios.get("/api/chat", config);
       setChats(data);
     } catch (error) {
       toast({
@@ -59,12 +56,11 @@ const MyChats = ({fetchAgain}) => {
   };
 
   useEffect(() => {
-    if (user) {
-      //Don’t fetch chats until the user is available. Fetch chats again if the user changes
+    if (user?.token) {
       fetchChats();
     }
-  }, [user,fetchAgain]);
-  
+  }, [user, fetchAgain]);
+
   return (
     <Box
       display={{ base: selectedChat ? "none" : "flex", md: "flex" }}
@@ -78,7 +74,6 @@ const MyChats = ({fetchAgain}) => {
       overflow="hidden"
       boxShadow={containerShadow}
     >
-      {/* Header */}
       <Flex
         px={4}
         py={3}
@@ -95,28 +90,20 @@ const MyChats = ({fetchAgain}) => {
         </Text>
         <Spacer />
         <GroupChatModal>
-
-
-        <Button
-          size="sm"
-          fontSize={{ base: "sm", md: "xs", lg: "sm" }}
-          leftIcon={<AddIcon />}
-          variant="solid"
-          colorScheme="teal"
-          borderRadius="xl"
+          <Button
+            size="sm"
+            fontSize={{ base: "sm", md: "xs", lg: "sm" }}
+            leftIcon={<AddIcon />}
+            variant="solid"
+            colorScheme="teal"
+            borderRadius="xl"
           >
-          New Group
-        </Button>
-      </GroupChatModal>
+            New Group
+          </Button>
+        </GroupChatModal>
       </Flex>
 
-      {/* List */}
-      <Box
-        p={3}
-        bg={listBg}
-        flex="1"
-        overflow="hidden"
-      >
+      <Box p={3} bg={listBg} flex="1" overflow="hidden">
         {chats ? (
           <Stack
             spacing={2}
@@ -136,11 +123,8 @@ const MyChats = ({fetchAgain}) => {
               const isSelected = selectedChat?._id === chat._id;
               const isGroupChat = chat.isGroup ?? chat.isGroupChat;
 
-              const title = !isGroupChat
-                ? getSender(user, chat.users)
-                : chat.chatName;
+              const title = !isGroupChat ? getSender(user, chat.users) : chat.chatName;
 
-              // Optional (only if your backend provides latestMessage)
               const lastMsg = chat.latestMessage?.content
                 ? chat.latestMessage.content
                 : "No messages yet";
@@ -167,18 +151,13 @@ const MyChats = ({fetchAgain}) => {
                       size="sm"
                       name={title}
                       bg={isSelected ? "whiteAlpha.400" : "teal.500"}
-                      color={isSelected ? "white" : "white"}
+                      color="white"
                     />
                     <Box flex="1" minW={0}>
                       <Flex align="center" gap={2}>
                         <Text fontWeight="700" noOfLines={1}>
                           {title}
                         </Text>
-
-                        {/* Optional: show a badge if you have notifications/unread */}
-                        {/* <Badge colorScheme={isSelected ? "blackAlpha" : "teal"} borderRadius="full">
-                        NEW
-                      </Badge> */}
                       </Flex>
 
                       <Text
@@ -189,11 +168,6 @@ const MyChats = ({fetchAgain}) => {
                         {lastMsg}
                       </Text>
                     </Box>
-
-                    {/* Optional: time if you have latestMessage.createdAt */}
-                    {/* <Text fontSize="xs" opacity={0.7} whiteSpace="nowrap">
-                    12:45 PM
-                  </Text> */}
                   </HStack>
                 </Box>
               );

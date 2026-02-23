@@ -17,13 +17,13 @@ import {
   IconButton,
   Spinner,
 } from "@chakra-ui/react";
-import axios from "axios";
+import axios from "../../config/axios";
 import { useState } from "react";
 import { MyContext } from '../../Context/Mycontext';
 import UserBadgeItem from '../UserAvtar/UserBadgeItem';
 import UserListItem from '../UserAvtar/UserListItem';
-const UpdateGroupChatModal = ({fetchAgain,setFetchgain}) => {
-   const { isOpen, onOpen, onClose } = useDisclosure();
+const UpdateGroupChatModal = ({fetchAgain,setFetchAgain}) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [groupChatName, setGroupChatName] = useState();
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
@@ -44,7 +44,7 @@ const handleSearch = async (query) => {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.get(`http://localhost:5000/api/user?search=${query}`, config);
+      const { data } = await axios.get(`/api/allUsers?search=${query}`, config);
       console.log(data);
       setLoading(false);
       setSearchResult(data);
@@ -72,7 +72,7 @@ const handleSearch = async (query) => {
         },
       };
       const { data } = await axios.put(
-        `http://localhost:5000/api/chat/rename`,
+        `/api/chat/rename`,
         {
           chatId: selectedChat._id,
           chatName: groupChatName,
@@ -130,7 +130,7 @@ const handleSearch = async (query) => {
         },
       };
       const { data } = await axios.put(
-        `http://localhost:5000/api/chat/groupadd`,
+        `/api/chat/groupadd`,
         {
           chatId: selectedChat._id,
           userId: user1._id,
@@ -175,7 +175,7 @@ const handleSearch = async (query) => {
         },
       };
       const { data } = await axios.put(
-        `http://localhost:5000/api/chat/groupremove`,
+        `/api/chat/groupremove`,
         {
           chatId: selectedChat._id,
           userId: user1._id,
@@ -185,7 +185,6 @@ const handleSearch = async (query) => {
 
       user1._id === user._id ? setSelectedChat() : setSelectedChat(data);
       setFetchAgain(!fetchAgain);
-      fetchMessages();
       setLoading(false);
     } catch (error) {
       toast({

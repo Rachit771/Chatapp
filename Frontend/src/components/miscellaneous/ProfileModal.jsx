@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Modal,
   ModalOverlay,
@@ -16,13 +17,13 @@ import { ViewIcon } from "@chakra-ui/icons";
 
 const ProfileModal = ({ user, children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const trigger = children
+    ? React.cloneElement(children, { onClick: onOpen })
+    : <IconButton icon={<ViewIcon />} onClick={onOpen} />;
 
   return (
     <>
-      {/* Trigger */}
-      <span onClick={onOpen} style={{ cursor: "pointer" }}>
-        {children ? children : <IconButton icon={<ViewIcon />} />}
-      </span>
+      {trigger}
 
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />
@@ -33,7 +34,7 @@ const ProfileModal = ({ user, children }) => {
             display="flex"
             justifyContent="center"
           >
-            {user.name}
+            {user?.name || "User"}
           </ModalHeader>
 
           <ModalCloseButton />
@@ -52,7 +53,7 @@ const ProfileModal = ({ user, children }) => {
             />
 
             <Text fontSize="30px" fontFamily="Work sans">
-              Email: {user.email}
+              Email: {user?.email || "Not available"}
             </Text>
           </ModalBody>
 

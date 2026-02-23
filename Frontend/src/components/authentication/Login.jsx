@@ -3,7 +3,7 @@ import { FormControl, FormLabel, VStack,Input, InputGroup, InputRightElement, Bu
 import React, { useState } from 'react'
 import {useToast} from '@chakra-ui/react'
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../../config/axios";
 
 
 const Login = () => {
@@ -36,7 +36,7 @@ const Login = () => {
         },
       };
       const { data } = await axios.post(
-        "http://localhost:5000/auth/login",
+        "/auth/login",
         {
           email,
           password,

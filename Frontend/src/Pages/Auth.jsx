@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axios from '../config/axios'
 // First usestate runs than return code than useeffect than inside which Fetchmessage is called
 const Auth =() => {
  const [Messages,setMessage]=useState([]);
  const FetchMessage=async ()=>{
   try{
-    const {data}=await axios.post("http://localhost:5000/auth/signup",{
+    const {data}=await axios.post("/auth/signup",{
       "name":"Rachit",
       "email":"sharmarachit554@gmil.com",
       "password":"123456"})

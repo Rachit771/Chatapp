@@ -13,7 +13,7 @@ import {
   useToast,
   Box,
 } from "@chakra-ui/react";
-import axios from "axios";
+import axios from "../../config/axios";
 import { useState } from "react";
 import { MyContext } from "../../Context/Mycontext";
 import UserBadgeItem from "../UserAvtar/UserBadgeItem";
@@ -21,7 +21,7 @@ import UserListItem from "../UserAvtar/UserListItem";
 
 const GroupChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [groupChatName, setGroupChatName] = useState();
+  const [groupChatName, setGroupChatName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
@@ -48,6 +48,7 @@ const GroupChatModal = ({ children }) => {
   const handleSearch = async (query) => {
     setSearch(query);
     if (!query) {
+      setSearchResult([])
       return;
     }
 
@@ -58,7 +59,7 @@ const GroupChatModal = ({ children }) => {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.get(`http://localhost:5000/api/allUsers?search=${query}`, config);
+      const { data } = await axios.get(`/api/allUsers?search=${query}`, config);
       console.log(data);
       setLoading(false);
       setSearchResult(data);
@@ -71,6 +72,7 @@ const GroupChatModal = ({ children }) => {
         isClosable: true,
         position: "bottom-left",
       });
+      
     }
   };
 
@@ -97,7 +99,7 @@ const GroupChatModal = ({ children }) => {
         },
       };
       const { data } = await axios.post(
-        `http://localhost:5000/api/chat/group`,
+        `/api/chat/group`,
         {
           name: groupChatName,
           users: JSON.stringify(selectedUsers.map((u) => u._id)),
@@ -126,6 +128,7 @@ const GroupChatModal = ({ children }) => {
         isClosable: true,
         position: "bottom",
       });
+      
     }
   };
 
@@ -150,6 +153,7 @@ const GroupChatModal = ({ children }) => {
               <Input
                 placeholder="Chat Name"
                 mb={3}
+                value={groupChatName}
                 onChange={(e) => setGroupChatName(e.target.value)}
               />
             </FormControl>
@@ -157,6 +161,7 @@ const GroupChatModal = ({ children }) => {
               <Input
                 placeholder="Add Users eg: John, Piyush, Jane"
                 mb={1}
+                value={search}
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </FormControl>

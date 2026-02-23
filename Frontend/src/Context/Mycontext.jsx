@@ -12,9 +12,10 @@ const ContextProvider = ({ children }) => {
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    setUser(userInfo);
+    const isAuthenticated = Boolean(userInfo?.token);
+    setUser(isAuthenticated ? userInfo : null);
 
-    if (!userInfo) {
+    if (!isAuthenticated) {
       navigate("/");
     }
   }, [navigate]);

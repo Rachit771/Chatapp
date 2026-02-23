@@ -2,7 +2,7 @@ import { FormControl, FormLabel, VStack,Input, InputGroup, InputRightElement, Bu
 import React, { useState } from 'react'
 import {useToast} from '@chakra-ui/react'
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../../config/axios";
 
 const Signup = () => {
   const [show,setshow]=useState(false);
@@ -41,11 +41,21 @@ const postDetails = (pics) => {
     })
       .then((res) => res.json())
       .then((data) => {
+        if (!data.secure_url) {
+          throw new Error(data?.error?.message || "Image upload failed");
+        }
         setPic(data.secure_url);
         setPicLoading(false);
       })
       .catch((err) => {
-        console.log(err);
+        toast({
+          title: "Image upload failed",
+          description: err.message || "Cloudinary upload failed",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
         setPicLoading(false);
       });
   } else {
@@ -84,6 +94,7 @@ const handleClick=()=> setshow(!show)
         isClosable: true,
         position: "bottom",
       });
+      setPicLoading(false);
       return;
     }
     console.log(name, email, password, pic);
@@ -94,7 +105,7 @@ const handleClick=()=> setshow(!show)
         },
       };
       const { data } = await axios.post(
-        "http://localhost:5000/auth/signup",
+        "/auth/signup",
         {
           name,
           email,
@@ -190,7 +201,7 @@ const handleClick=()=> setshow(!show)
       >
         Signup
       </Button>
-      <Button
+      {/* <Button
         variant="solid"
         colorScheme="red"
         width="100%"
@@ -200,7 +211,7 @@ const handleClick=()=> setshow(!show)
         }}
       >
         Get Guest User Credentials
-      </Button>
+      </Button> */}
     </VStack>
   )
 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input, useToast } from "@chakra-ui/react";
-import axios from "axios";
+import axios from "../../config/axios";
 import UserListItem from "../UserAvtar/UserListItem.jsx";
 import { Spinner } from "@chakra-ui/react";
 import {
@@ -25,7 +25,7 @@ import {
   IconButton,
   Avatar,
 } from "@chakra-ui/react";
-import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { BellIcon, ChevronDownIcon, Search2Icon } from "@chakra-ui/icons";
 import ProfileModal from "./ProfileModal.jsx";
 import ChatLoading from "../UserAvtar/ChatLoading.jsx";
 import { MyContext } from "../../Context/Mycontext.jsx";
@@ -68,7 +68,7 @@ const SideDrawer = () => {
         },
       };
 
-      const { data } = await axios.get(`http://localhost:5000/api/allUsers?search=${search}`, config);
+      const { data } = await axios.get(`/api/allUsers?search=${search}`, config);
       console.log("Search API response:", data, Array.isArray(data));
 
       setLoading(false);
@@ -95,7 +95,7 @@ const SideDrawer = () => {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.post(`http://localhost:5000/api/chat`, { userId }, config);
+      const { data } = await axios.post(`/api/chat`, { userId }, config);
     if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]); //It decides which chat to add by clicking on Go
       setSelectedChat(data);
       setLoadingChat(false);
@@ -124,7 +124,7 @@ const SideDrawer = () => {
       >
         <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
           <Button variant="ghost" onClick={onOpen}>
-            <i className="fas fa-search"></i>
+            <Search2Icon />
             <Text display={{ base: "none", md: "flex" }} px={4}>
               Search User
             </Text>
@@ -192,18 +192,12 @@ const SideDrawer = () => {
             </MenuButton>
 
             <MenuList>
-              <MenuItem
-                onClick={() => {
-                  document.getElementById("open-profile-modal").click();
-                }}
-              >
-                My Profile
-              </MenuItem>
+              <ProfileModal user={user}>
+                <MenuItem>My Profile</MenuItem>
+              </ProfileModal>
               <MenuDivider />
               <MenuItem onClick={logoutHandler}>Logout</MenuItem>
             </MenuList>
-
-            <ProfileModal user={user} />
           </Menu>
         </Box>
       </Box>

@@ -38,7 +38,7 @@ const accessChat = asyncHandler(async (req, res) => {
 
 
 
-//@description     Fetch all chats for a user
+//@description     Fetch all chats for a user(sidebar api)
 //@route           GET /api/chat/
 //@access          Protected
 const fetchChats = asyncHandler(async (req, res) => {
