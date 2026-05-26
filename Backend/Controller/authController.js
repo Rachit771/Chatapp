@@ -35,7 +35,7 @@ const loginHandle=asyncHandler(async (req,res)=>{
  if(!userExist) throw new Error('First Signup');
  const isPassword=await bcrypt.compare(password,userExist.password);
  if(!isPassword) throw new Error('Incorrect password');
- return res.status(201).json({
+ return res.status(200).json({
      _id: userExist._id,
      name: userExist.name,
      email: userExist.email,

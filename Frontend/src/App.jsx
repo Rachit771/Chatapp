@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 import './App.css'
-import Auth from './Pages/Auth';
 import Home from './Pages/Home';
 import ChatPage from "./Pages/ChatPage";
 function App() {
@@ -9,9 +8,8 @@ function App() {
   return (
     <div className="App">
     <Routes>
-      <Route path='/' element={<Home/>}></Route>
+      <Route path='/' element={<Home/>}></Route>   //it is for rendering specific component at a particular url
       <Route path="/chats" element={<ChatPage/>} />
-      <Route path='/login' element={<Auth/>}></Route>
     </Routes>
     </div>
   )

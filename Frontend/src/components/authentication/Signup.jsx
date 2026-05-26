@@ -3,16 +3,18 @@ import React, { useState } from 'react'
 import {useToast} from '@chakra-ui/react'
 import { useNavigate } from "react-router-dom";
 import axios from "../../config/axios";
+import { MyContext } from '../../Context/Mycontext';
 
 const Signup = () => {
+  const {setUser}=MyContext()
   const [show,setshow]=useState(false);
   const [name,setName]=useState();
   const [email,setEmail]=useState();
-  const [confirmpassword
-    ,setConfirmpassword]=useState();
+  const [confirmpassword,setConfirmpassword]=useState();
     const [password, setPassword] = useState();
     const [pic,setPic]=useState();
     const [picLoading, setPicLoading] = useState(false);
+    const [loading,setLoading]=useState(false);
   const toast=useToast();
   const navigate = useNavigate();
 const postDetails = (pics) => {
@@ -71,10 +73,10 @@ const postDetails = (pics) => {
 };
 
 
-    
-const handleClick=()=> setshow(!show)
+ const handleClick=()=> setshow(!show)
+
  const submitHandler = async () => {
-    setPicLoading(true);
+    setLoading(true);
     if (!name || !email || !password || !confirmpassword) {
       toast({
         title: "Please Fill all the Feilds",
@@ -83,7 +85,7 @@ const handleClick=()=> setshow(!show)
         isClosable: true,
         position: "bottom",
       });
-      setPicLoading(false);
+      setLoading(false);
       return;
     }
     if (password !== confirmpassword) {
@@ -94,7 +96,7 @@ const handleClick=()=> setshow(!show)
         isClosable: true,
         position: "bottom",
       });
-      setPicLoading(false);
+      setLoading(false);
       return;
     }
     console.log(name, email, password, pic);
@@ -122,19 +124,21 @@ const handleClick=()=> setshow(!show)
         isClosable: true,
         position: "bottom",
       });
+      setUser(data)
       localStorage.setItem("userInfo", JSON.stringify(data));
-      setPicLoading(false);
+      setLoading(false);
       navigate("/chats");
     } catch (error) {
+
       toast({
         title: "Error Occured!",
-        description: error.response.data.message,
+        description: error?.response?.data?.message || error.message,
         status: "error",
         duration: 5000,
         isClosable: true,
         position: "bottom",
       });
-      setPicLoading(false);
+      setLoading(false);
     }
   };
 
@@ -192,12 +196,14 @@ const handleClick=()=> setshow(!show)
        accept='image/*'
         onChange={(e)=>postDetails(e.target.files[0])}></Input>
       </FormControl>
+
+
       <Button 
       colorScheme='blue'
       width='100%'
       style={{marginTop:15}}
       onClick={submitHandler}
-       isLoading={picLoading}
+       isLoading={loading}
       >
         Signup
       </Button>

@@ -5,7 +5,7 @@ const User = require("../Model/userModel");
 //@description     Create or fetch One to One Chat
 //@route           POST /api/chat/
 //@access          Protected
-
+// Maps to SideDrawer Component
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -17,6 +17,7 @@ const accessChat = asyncHandler(async (req, res) => {
   let chat = await Chat.findOne({
     isGroup: false,
     users: { $all: [req.user._id, userId] },
+    $expr: { $eq: [{ $size: "$users" }, 2] }  //This line is important
   }).populate("users", "-password");
 
   if (chat) {
@@ -41,6 +42,7 @@ const accessChat = asyncHandler(async (req, res) => {
 //@description     Fetch all chats for a user(sidebar api)
 //@route           GET /api/chat/
 //@access          Protected
+//Maps to MyChats
 const fetchChats = asyncHandler(async (req, res) => {
   try {
     Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })

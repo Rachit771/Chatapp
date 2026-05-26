@@ -4,18 +4,20 @@ import React, { useState } from 'react'
 import {useToast} from '@chakra-ui/react'
 import { useNavigate } from "react-router-dom";
 import axios from "../../config/axios";
+import { MyContext } from "../../Context/Mycontext";
 
 
 const Login = () => {
   const [show,setshow]=useState(false);
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
-    const [picLoading, setPicLoading] = useState(false);
+    const [Loading, setLoading] = useState(false);
       const toast=useToast();
-      const navigate = useNavigate();
+      const navigate = useNavigate();      //use for redirecting to /chats after login
+      const { setUser } = MyContext();
     const handleClick=()=> setshow(!show)
     const submitHandler = async () => {
-    setPicLoading(true);
+    setLoading(true);
     if (!email || !password) {
       toast({
         title: "Please Fill all the Feilds",
@@ -24,7 +26,7 @@ const Login = () => {
         isClosable: true,
         position: "bottom",
       });
-      setPicLoading(false);
+      setLoading(false);
       return;
     }
    
@@ -52,18 +54,19 @@ const Login = () => {
         position: "bottom",
       });
       localStorage.setItem("userInfo", JSON.stringify(data));
-      setPicLoading(false);
+      setUser(data);
+      setLoading(false);
       navigate("/chats");
     } catch (error) {
       toast({
         title: "Error Occured!",
-        description: error.response.data.message,
+        description: error.response.data.message || "Something went wrong",
         status: "error",
         duration: 5000,
         isClosable: true,
         position: "bottom",
       });
-      setPicLoading(false);
+      setLoading(false);
     }
   };
   return (
@@ -81,7 +84,7 @@ const Login = () => {
         <FormLabel>Password</FormLabel>
         <InputGroup>
         <Input 
-        type={show ? "text":"password"}
+        type={show ? "text":"password"}         //show==true than text or else password
         placeholder='Enter your password'
         value={password}
         onChange={(e)=>setPassword(e.target.value)} />
@@ -95,7 +98,7 @@ const Login = () => {
       width='100%'
       style={{marginTop:15}}
       onClick={submitHandler}
-       isLoading={picLoading}
+       isLoading={Loading}
       >
         Login
       </Button>

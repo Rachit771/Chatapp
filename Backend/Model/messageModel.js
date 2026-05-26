@@ -7,10 +7,11 @@ const MessageSchema=mongoose.Schema({
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-      }
+      } 
     ],
 },
 {timestamps:true}
 )
 const Message=mongoose.model('Message',MessageSchema);
+MessageSchema.index({ chat: 1, createdAt: 1 });
 module.exports=Message;

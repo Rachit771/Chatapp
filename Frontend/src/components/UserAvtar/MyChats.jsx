@@ -32,7 +32,7 @@ const MyChats = ({ fetchAgain }) => {
   const unselectedText = useColorModeValue("gray.800", "gray.100");
 
   const fetchChats = async () => {
-    if (!user?.token) return;
+    if (!user?.token) return;           //if user or token doen't exist than return else user.token
 
     try {
       const config = {
@@ -56,10 +56,10 @@ const MyChats = ({ fetchAgain }) => {
   };
 
   useEffect(() => {
-    if (user?.token) {
+    if (user?.token) {        //This optional chaining prevent crashes if user is null
       fetchChats();
     }
-  }, [user, fetchAgain]);
+  }, [user, fetchAgain]);         //run when user(login/logout) and fetchagain state changes
 
   return (
     <Box
@@ -104,7 +104,7 @@ const MyChats = ({ fetchAgain }) => {
       </Flex>
 
       <Box p={3} bg={listBg} flex="1" overflow="hidden">
-        {chats ? (
+        {chats ? (                                    //If chats exists then show list else show loading skeleton
           <Stack
             spacing={2}
             overflowY="auto"
@@ -120,10 +120,10 @@ const MyChats = ({ fetchAgain }) => {
             }}
           >
             {chats.map((chat) => {
-              const isSelected = selectedChat?._id === chat._id;
-              const isGroupChat = chat.isGroup ?? chat.isGroupChat;
+              const isSelected = selectedChat?._id === chat._id;          
+              const isGroupChat = chat.isGroup ?? chat.isGroupChat; //it is for checking 1 to 1 or group chat and displaying title
 
-              const title = !isGroupChat ? getSender(user, chat.users) : chat.chatName;
+              const title = !isGroupChat ? getSender(user, chat.users || []) : chat.chatName || "Unnamed Group";
 
               const lastMsg = chat.latestMessage?.content
                 ? chat.latestMessage.content

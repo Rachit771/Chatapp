@@ -1,10 +1,16 @@
 export const getSender = (loggedUser, users) => {
-   //console.log(loggedUser._id) console.log(users[0]._id, users[1]._id ) 
-   return users[1]?._id === loggedUser?._id ? users[0].name : users[1].name; 
-   //This for deciding which ChatName to display 
-}
+  if (!loggedUser || !Array.isArray(users) || users.length === 0) return "Unknown";
+  if (users.length === 1) return users[0]?.name || "Unknown";
+
+  const otherUser = users[0]?._id === loggedUser?._id ? users[1] : users[0];
+  return otherUser?.name || "Unknown";
+};
+
 export const getSenderFull = (loggedUser, users) => {
-  return users[1]._id === loggedUser._id ? users[0] : users[1];
+  if (!loggedUser || !Array.isArray(users) || users.length === 0) return null;
+  if (users.length === 1) return users[0] || null;
+
+  return users[0]?._id === loggedUser?._id ? users[1] : users[0];
 };
 
 export const isSameSenderMargin = (messages, m, i, userId) => {

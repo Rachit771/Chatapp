@@ -29,21 +29,32 @@ import { BellIcon, ChevronDownIcon, Search2Icon } from "@chakra-ui/icons";
 import ProfileModal from "./ProfileModal.jsx";
 import ChatLoading from "../UserAvtar/ChatLoading.jsx";
 import { MyContext } from "../../Context/Mycontext.jsx";
+import { getSender } from "../../config/ChatLogics.jsx";
 
 
 const SideDrawer = () => {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [notification, setNotification] = useState([]);
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const navigate = useNavigate();
-  const { chats, setChats, setSelectedChat, user } = MyContext();
+  const {
+    chats,
+    setChats,
+    setSelectedChat,
+    setUser,
+    user,
+    notification,
+    setNotification,
+  } = MyContext();
 
   const logoutHandler = () => {
     localStorage.removeItem("userInfo");
+    setUser(null);
+    setChats([]);
+    setSelectedChat(null);
     navigate("/", { replace: true });
   };
 
@@ -111,6 +122,17 @@ const SideDrawer = () => {
       });
     }
   };
+
+  const openNotification = (notificationItem) => {
+    const chat = notificationItem.chat;
+    setSelectedChat(chat);
+    setNotification((prev) => prev.filter((n) => n.chat._id !== chat._id));
+  };
+
+  const getNotificationTitle = (chat) => {
+    return chat.isGroup ? chat.chatName : getSender(user, chat.users);
+  };
+
   return (
     <>
       <Box
@@ -164,12 +186,25 @@ const SideDrawer = () => {
 
             <MenuList>
               {notification.length === 0 ? (
-                <Text px={4}>No New Messages</Text>
+                <Text px={4} py={2}>
+                  No New Messages
+                </Text>
               ) : (
                 notification.map((n, i) => (
-                  <Text key={i} px={4}>
-                    {n.message}
-                  </Text>
+                  <MenuItem
+                    key={n._id || i}
+                    alignItems="flex-start"
+                    flexDir="column"
+                    gap={1}
+                    onClick={() => openNotification(n)}
+                  >
+                    <Text fontWeight="semibold" noOfLines={1}>
+                      {getNotificationTitle(n.chat)}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" noOfLines={1}>
+                      {n.sender?.name}: {n.content}
+                    </Text>
+                  </MenuItem>
                 ))
               )}
             </MenuList>

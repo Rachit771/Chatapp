@@ -4,21 +4,21 @@ import { useNavigate } from "react-router-dom";
 const Context = createContext();
 
 const ContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+    return userInfo?.token ? userInfo : null;
+  });
+
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
-
+  const [notification, setNotification] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    const isAuthenticated = Boolean(userInfo?.token);
-    setUser(isAuthenticated ? userInfo : null);
-
-    if (!isAuthenticated) {
+    if (!user) {
       navigate("/");
     }
-  }, [navigate]);
+  }, [user]);
 
   return (
     <Context.Provider
@@ -26,6 +26,8 @@ const ContextProvider = ({ children }) => {
         user,
         setUser,
         chats,
+        notification,
+        setNotification,
         setChats,
         selectedChat,
         setSelectedChat,
