@@ -41,7 +41,9 @@ const server=app.listen(Port,()=>{console.log(`Server running at ${Port}`)})
 const io=require('socket.io')(server,{
   pingTimeout:6000,
   cors:{                                     //Here we are handling cors issue for sockets
-    origin:"http://localhost:5173"
+    origin:"https://chatapp-frontend-8s63.onrender.com",
+    methods: ["GET", "POST"],
+    credentials: true
   }
 }); 
 io.on("connection",(socket)=>{
