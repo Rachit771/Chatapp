@@ -12,13 +12,14 @@ const ContextProvider = ({ children }) => {
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [notification, setNotification] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
       navigate("/");
     }
-  }, [user]);
+  }, [user, navigate]);
 
   return (
     <Context.Provider
@@ -28,6 +29,8 @@ const ContextProvider = ({ children }) => {
         chats,
         notification,
         setNotification,
+        onlineUsers,
+        setOnlineUsers,
         setChats,
         selectedChat,
         setSelectedChat,

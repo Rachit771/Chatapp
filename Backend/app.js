@@ -3,6 +3,12 @@ const dotenv=require('dotenv');
 const cors=require('cors')
 dotenv.config();
 require('./config/db')
+require('./config/redis');
+const {
+  getOnlineUsers,
+  healthCheck,
+  setUserPresence,
+} = require('./utils/redisUtils');
 const auth=require('./routes/authroute');
 const search=require('./routes/userRoute')
 const chatRoutes=require('./routes/ChatRoute')
@@ -29,8 +35,12 @@ app.use(
 
 app.use(express.json())
 
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
+app.get("/health", async (req, res) => {
+  const redisHealthy = await healthCheck();
+  res.status(redisHealthy ? 200 : 503).json({
+    status: redisHealthy ? "ok" : "degraded",
+    redis: redisHealthy ? "up" : "down",
+  });
 });
 
 app.use('/auth',auth)
@@ -38,6 +48,8 @@ app.use('/api',search)
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
 const server=app.listen(Port,()=>{console.log(`Server running at ${Port}`)})
+
+
 const io=require('socket.io')(server,{
   pingTimeout:6000,
   cors:{                                     //Here we are handling cors issue for sockets
@@ -49,9 +61,14 @@ const io=require('socket.io')(server,{
 io.on("connection",(socket)=>{
   console.log("connected to socket.io");
 
-  socket.on("setup", (userData) => {
+  socket.on("setup", async (userData) => {
+    if (!userData?._id) return;
+
+    socket.data.userId = userData._id;
     socket.join(userData._id);
+    await setUserPresence(userData._id, true);
     socket.emit("connected");
+    io.emit("online users", await getOnlineUsers());
   });
   socket.on("join chat", (room) => {
     socket.join(room);
@@ -70,5 +87,13 @@ io.on("connection",(socket)=>{
   });
   socket.on("typing", (room) => socket.in(room).emit("typing"));
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
-})
+  socket.on("disconnect", async () => {
+    if (!socket.data.userId) return;
 
+    const remainingSockets = await io.in(socket.data.userId).fetchSockets();
+    if (remainingSockets.length === 0) {
+      await setUserPresence(socket.data.userId, false);
+    }
+    io.emit("online users", await getOnlineUsers());
+  });
+})

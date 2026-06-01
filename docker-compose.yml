@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./Backend
+    container_name: chatapp-backend
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/chatapp}
+      - REDIS_URL=redis://redis:6379
+      - PORT=7000
+      - JWT_SECRET=${JWT_SECRET}
+      - CLIENT_URLS=${CLIENT_URLS:-http://localhost:5173}
+    networks:
+      - chatapp-network
+
+  mongo:
+    image: mongo:6
+    container_name: chatapp-mongo
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - chatapp-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: chatapp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - chatapp-network
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  chatapp-network:
+    driver: bridge

@@ -1,24 +1,31 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { AddIcon } from "@chakra-ui/icons";
 import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import {
   Avatar,
+  AvatarBadge,
   Flex,
   HStack,
   Spacer,
   useColorModeValue,
 } from "@chakra-ui/react";
 import axios from "../../config/axios";
-import { useEffect } from "react";
 import { MyContext } from "../../Context/Mycontext";
 import { Button } from "@chakra-ui/react";
-import { getSender } from "../../config/ChatLogics";
+import { getSender, getSenderFull } from "../../config/ChatLogics";
 import ChatLoading from "./ChatLoading";
 import GroupChatModal from "../miscellaneous/GroupChatModal";
 
 const MyChats = ({ fetchAgain }) => {
-  const { selectedChat, setSelectedChat, user, chats, setChats } = MyContext();
+  const {
+    selectedChat,
+    setSelectedChat,
+    user,
+    chats,
+    setChats,
+    onlineUsers,
+  } = MyContext();
 
   const toast = useToast();
   const containerBg = useColorModeValue("white", "gray.800");
@@ -31,7 +38,7 @@ const MyChats = ({ fetchAgain }) => {
   const selectedText = "white";
   const unselectedText = useColorModeValue("gray.800", "gray.100");
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     if (!user?.token) return;           //if user or token doen't exist than return else user.token
 
     try {
@@ -43,7 +50,7 @@ const MyChats = ({ fetchAgain }) => {
 
       const { data } = await axios.get("/api/chat", config);
       setChats(data);
-    } catch (error) {
+    } catch {
       toast({
         title: "Error Occured!",
         description: "Failed to Load the chats",
@@ -53,13 +60,13 @@ const MyChats = ({ fetchAgain }) => {
         position: "bottom-left",
       });
     }
-  };
+  }, [setChats, toast, user]);
 
   useEffect(() => {
     if (user?.token) {        //This optional chaining prevent crashes if user is null
       fetchChats();
     }
-  }, [user, fetchAgain]);         //run when user(login/logout) and fetchagain state changes
+  }, [fetchAgain, fetchChats, user]);         //run when user(login/logout) and fetchagain state changes
 
   return (
     <Box
@@ -124,6 +131,10 @@ const MyChats = ({ fetchAgain }) => {
               const isGroupChat = chat.isGroup ?? chat.isGroupChat; //it is for checking 1 to 1 or group chat and displaying title
 
               const title = !isGroupChat ? getSender(user, chat.users || []) : chat.chatName || "Unnamed Group";
+              const otherUser = !isGroupChat
+                ? getSenderFull(user, chat.users || [])
+                : null;
+              const isOnline = onlineUsers.includes(otherUser?._id);
 
               const lastMsg = chat.latestMessage?.content
                 ? chat.latestMessage.content
@@ -152,7 +163,15 @@ const MyChats = ({ fetchAgain }) => {
                       name={title}
                       bg={isSelected ? "whiteAlpha.400" : "teal.500"}
                       color="white"
-                    />
+                    >
+                      {isOnline && (
+                        <AvatarBadge
+                          boxSize="1em"
+                          bg="green.400"
+                          borderColor={isSelected ? selectedBg : unselectedBg}
+                        />
+                      )}
+                    </Avatar>
                     <Box flex="1" minW={0}>
                       <Flex align="center" gap={2}>
                         <Text fontWeight="700" noOfLines={1}>

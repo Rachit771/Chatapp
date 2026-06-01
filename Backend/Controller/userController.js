@@ -1,14 +1,9 @@
-const User=require('../Model/userModel')
 const asyncHandler = require("express-async-handler");
-const allUsers=asyncHandler(async (req,res)=>{
-  const keyword=req.query.search ?
-  {
-    $or:[
-      {name:{$regex:req.query.search ,$options:'i'}},
-      {email:{$regex:req.query.search ,$options:'i'}}
-    ]
-  }:{}
-  const users=await User.find(keyword).find({_id:{$ne:req.user._id}}).select("-password");
-  res.send(users)
-})
-module.exports={allUsers}
+const userService = require("../services/userService");
+
+const allUsers = asyncHandler(async (req, res) => {
+  const users = await userService.searchUsers(req.user._id, req.query.search);
+  res.send(users);
+});
+
+module.exports = { allUsers };

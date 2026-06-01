@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { MyContext } from "../../Context/Mycontext";
 import { FormControl } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
@@ -15,7 +15,14 @@ import io from "socket.io-client";
 const ENDPOINT = "https://chatapp-xv8r.onrender.com";
 var socket, selectedChatCompare;
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  const { user, selectedChat, setSelectedChat, notification, setNotification } = MyContext();
+  const {
+    user,
+    selectedChat,
+    setSelectedChat,
+    setNotification,
+    onlineUsers,
+    setOnlineUsers,
+  } = MyContext();
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -45,7 +52,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, timerLength);
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedChat) return;
 
     setLoading(true);
@@ -62,7 +69,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       setMessages(data);
       socket.emit("join chat", selectedChat._id);
-    } catch (error) {
+    } catch {
       toast({
         title: "Error Occured!",
         description: "Failed to Load the Messages",
@@ -74,7 +81,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedChat, toast, user]);
 
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage.trim()) {
@@ -98,7 +105,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         socket.emit("new message", data);
         setMessages([...messages, data]);
         
-      } catch (error) {
+      } catch {
         toast({
           title: "Error Occured!",
           description: "Failed to send the Message",
@@ -113,14 +120,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     useEffect(() => {
     socket = io(ENDPOINT);
+    const handleConnected = () => setSocketConnected(true);
+    const handleOnlineUsers = (userIds) => setOnlineUsers(userIds);
+    const handleTyping = () => setIsTyping(true);
+    const handleStopTyping = () => setIsTyping(false);
+
+    socket.on("connected", handleConnected);
+    socket.on("online users", handleOnlineUsers);
+    socket.on("typing", handleTyping);
+    socket.on("stop typing", handleStopTyping);
     socket.emit("setup", user);
-    socket.on("connected", () => setSocketConnected(true));
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("stop typing", () => setIsTyping(false));
 
-
-    // eslint-disable-next-line
-  }, []);
+    return () => {
+      socket.off("connected", handleConnected);
+      socket.off("online users", handleOnlineUsers);
+      socket.off("typing", handleTyping);
+      socket.off("stop typing", handleStopTyping);
+      socket.disconnect();
+    };
+  }, [setOnlineUsers, user]);
 
   useEffect(() => {
     fetchMessages();
@@ -131,7 +149,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         prev.filter((n) => n.chat._id !== selectedChat._id)
       );
      }
-  }, [selectedChat]);
+  }, [fetchMessages, selectedChat, setNotification]);
 
     useEffect(() => {
     const handleMessageReceived = (newMessageRecieved) => {
@@ -177,7 +195,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             />
             {!selectedChat.isGroup ? (
               <>
-                {getSender(user, selectedChat.users)}
+                <Box>
+                  <Text>{getSender(user, selectedChat.users)}</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    {onlineUsers.includes(
+                      getSenderFull(user, selectedChat.users)?._id
+                    )
+                      ? "Online"
+                      : "Offline"}
+                  </Text>
+                </Box>
                 <ProfileModal user={getSenderFull(user, selectedChat.users)} />
               </>
             ) : (
