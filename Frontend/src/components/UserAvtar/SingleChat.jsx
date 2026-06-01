@@ -12,7 +12,7 @@ import ProfileModal from "../miscellaneous/ProfileModal";
 import UpdateGroupChatModal from "../miscellaneous/UpdateGroupChatModal";
 import ScrollableChat from "./ScrollableChat";
 import io from "socket.io-client";
-const ENDPOINT = "https://chatapp-xv8r.onrender.com";
+const ENDPOINT = "https://chatapp-backend-f2k1.onrender.com";
 var socket, selectedChatCompare;
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const {
