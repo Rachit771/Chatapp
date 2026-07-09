@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { MyContext } from "../../Context/Mycontext";
 import { FormControl } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
@@ -13,7 +13,7 @@ import UpdateGroupChatModal from "../miscellaneous/UpdateGroupChatModal";
 import ScrollableChat from "./ScrollableChat";
 import io from "socket.io-client";
 const ENDPOINT = "https://chatapp-backend-f2k1.onrender.com";
-var socket, selectedChatCompare;
+
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const {
     user,
@@ -27,29 +27,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
   const toast = useToast();
+  const socketRef = useRef(null);
+  const selectedChatCompare = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
 
-    if (!socketConnected) return;
+    if (!socketConnected || !socketRef.current || !selectedChat) return;
 
-    if (!typing) {
-      setTyping(true);
-      socket.emit("typing", selectedChat._id);
-    }
-    let lastTypingTime = new Date().getTime();
-    var timerLength = 3000;
-    setTimeout(() => {
-      var timeNow = new Date().getTime();
-      var timeDiff = timeNow - lastTypingTime;
-      if (timeDiff >= timerLength && typing) {
-        socket.emit("stop typing", selectedChat._id);
-        setTyping(false);
-      }
-    }, timerLength);
+    socketRef.current.emit("typing", selectedChat._id);
+
+    clearTimeout(typingTimeoutRef.current);
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socketRef.current?.emit("stop typing", selectedChat._id);
+    }, 3000);
   };
 
   const fetchMessages = useCallback(async () => {
@@ -68,7 +63,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         config
       );
       setMessages(data);
-      socket.emit("join chat", selectedChat._id);
+      socketRef.current?.emit("join chat", selectedChat._id);
     } catch {
       toast({
         title: "Error Occured!",
@@ -85,7 +80,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage.trim()) {
-      socket.emit("stop typing", selectedChat._id);
+      socketRef.current?.emit("stop typing", selectedChat._id);
+      clearTimeout(typingTimeoutRef.current);
       try {
         const config = {
           headers: {
@@ -102,8 +98,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           config
         );
         setNewMessage("");
-        socket.emit("new message", data);
-        setMessages([...messages, data]);
+        socketRef.current?.emit("new message", data);
+        setMessages((prev) => [...prev, data]);
         
       } catch {
         toast({
@@ -119,30 +115,58 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
     useEffect(() => {
-    socket = io(ENDPOINT);
+    const socketInstance = io(ENDPOINT);
+    socketRef.current = socketInstance;
     const handleConnected = () => setSocketConnected(true);
     const handleOnlineUsers = (userIds) => setOnlineUsers(userIds);
-    const handleTyping = () => setIsTyping(true);
-    const handleStopTyping = () => setIsTyping(false);
+    const handleTyping = (roomId) => {
+      if (selectedChatCompare.current?._id === roomId) {
+        setIsTyping(true);
+      }
+    };
+    const handleStopTyping = (roomId) => {
+      if (selectedChatCompare.current?._id === roomId) {
+        setIsTyping(false);
+      }
+    };
+    const handleMessageReceived = (newMessageRecieved) => {
+      if (
+        !selectedChatCompare.current || // if chat is not selected or doesn't match current chat
+        selectedChatCompare.current._id !== newMessageRecieved.chat._id
+      ) {
+        setNotification((prev) => {
+          if (prev.some((n) => n._id === newMessageRecieved._id)) return prev;
+          return [newMessageRecieved, ...prev];
+        });
+        setFetchAgain((prev) => !prev);
+      } else {
+        setMessages((prev) => [...prev, newMessageRecieved]);
+      }
+    };
 
-    socket.on("connected", handleConnected);
-    socket.on("online users", handleOnlineUsers);
-    socket.on("typing", handleTyping);
-    socket.on("stop typing", handleStopTyping);
-    socket.emit("setup", user);
+    socketInstance.on("connected", handleConnected);
+    socketInstance.on("online users", handleOnlineUsers);
+    socketInstance.on("typing", handleTyping);
+    socketInstance.on("stop typing", handleStopTyping);
+    socketInstance.on("message recieved", handleMessageReceived);
+    socketInstance.emit("setup", user);
 
     return () => {
-      socket.off("connected", handleConnected);
-      socket.off("online users", handleOnlineUsers);
-      socket.off("typing", handleTyping);
-      socket.off("stop typing", handleStopTyping);
-      socket.disconnect();
+      socketInstance.off("connected", handleConnected);
+      socketInstance.off("online users", handleOnlineUsers);
+      socketInstance.off("typing", handleTyping);
+      socketInstance.off("stop typing", handleStopTyping);
+      socketInstance.off("message recieved", handleMessageReceived);
+      socketInstance.disconnect();
+      if (socketRef.current === socketInstance) {
+        socketRef.current = null;
+      }
     };
-  }, [setOnlineUsers, user]);
+  }, [setFetchAgain, setNotification, setOnlineUsers, user]);
 
   useEffect(() => {
-    fetchMessages();
-     selectedChatCompare = selectedChat;
+     selectedChatCompare.current = selectedChat;
+     fetchMessages();
 
      if (selectedChat) {
       setNotification((prev) =>
@@ -151,26 +175,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
      }
   }, [fetchMessages, selectedChat, setNotification]);
 
-    useEffect(() => {
-    const handleMessageReceived = (newMessageRecieved) => {
-      if (
-        !selectedChatCompare || // if chat is not selected or doesn't match current chat
-        selectedChatCompare._id !== newMessageRecieved.chat._id
-      ) {
-        setNotification((prev) => {
-          if (prev.some((n) => n._id === newMessageRecieved._id)) return prev;
-          return [newMessageRecieved, ...prev];
-        });
-          setFetchAgain(!fetchAgain);
-      } else {
-        setMessages([...messages, newMessageRecieved]);
-      }
-    };
-
-    socket.on("message recieved", handleMessageReceived);
-
-    return () => socket.off("message recieved", handleMessageReceived);
-  }, [fetchAgain, messages, setFetchAgain, setNotification]);
+  useEffect(() => {
+    return () => clearTimeout(typingTimeoutRef.current);
+  }, []);
 
 
   return (
